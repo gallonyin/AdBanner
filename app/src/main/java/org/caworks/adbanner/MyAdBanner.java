@@ -1,6 +1,5 @@
 package org.caworks.adbanner;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,35 +12,36 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.caworks.adbanner.MainActivity.screenWidth;
+
 /**
  * Created by Gallon on 2016/9/23
- * implements View.OnTouchListener & onPageChangedListener (not come true)
+ *
  * 使用
  * 方式一：
  * 1.创建该对象请在代码中banner = new MyAdBanner(context); // (推荐传入 context-application)
  * 2.再加入到头布局中addHeaderView(banner);
  * 方式二：
  * 1.在xml文件中直接做节点使用
- * <p>
  * 建议：如果在Ultra-PTR内嵌 则仅需要在布局中把 PTR 改为 MyFixedPtrFrameLayout即可
  * 目前使用中：1.首页-关注(Fixed) 2.直播(Fixed) 3.我的-签到(非内嵌)
- * <p>
  * 注意：确保在Ultra-PTR内嵌时替换成 MyFixedPtrFrameLayout 不然可能出现类型转换异常
- * <p>
+ *
  * View的生命周期
  * View的构造方法-->onFinishInflate()-->onAttachToWindow
  * -->onMeasure()-->onSizeChanged()-->onLayout() -->onDraw()
@@ -98,6 +98,7 @@ public class MyAdBanner extends FrameLayout {
             handler.sendEmptyMessageDelayed(mWhat, mPeriod);
         }
     };
+    private Toast toast;
 
     public MyAdBanner(Context context) {
         this(context, null);
@@ -112,7 +113,7 @@ public class MyAdBanner extends FrameLayout {
 
         mViewPager = new NoTouchViewPager(mContext);
         ll_point = new LinearLayout(mContext);
-        LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
         params.bottomMargin = DensityUtil.dp2px(mContext, 7);
         ll_point.setLayoutParams(params);
@@ -134,7 +135,7 @@ public class MyAdBanner extends FrameLayout {
      * } else {
      * banner.setVisibility(View.GONE);
      * }
-     * <p>
+     *
      * 1.1 设置ptr并调用MyFixedPtr的requestDisallowInterceptTouchEvent方法请求不拦截
      */
     public MyAdBanner setSource(@NonNull List<BannerItem> list) {
@@ -162,7 +163,6 @@ public class MyAdBanner extends FrameLayout {
         extraCopy();
         imageViews = new ImageView[adCount];
         Log.e(TAG, "adCount: " + adCount);
-//        GlideRoundTransform transform = new GlideRoundTransform(mContext, 5);
 
         for (int i = 0; i < adCount; i++) {
             final int j = i;
@@ -171,15 +171,15 @@ public class MyAdBanner extends FrameLayout {
             LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
             params.gravity = Gravity.CENTER;
             imageViews[i].setLayoutParams(params);
+            imageViews[i].setScaleType(ImageView.ScaleType.FIT_CENTER);
 
             // 图片下载地址 item.imgUrl
             BannerItem item = mDatas.get(i);
             if (!TextUtils.isEmpty(item.imgUrl)) {
-                // 1.根据url下载图片 2.设置给imageview 3.设置缓存 4.避免oom (或对框架要求)
-                // ! 建议设置加载中图片 (设置占位图placeholder与圆角圆形图会产生冲突)
-//                ImageLoaderFactory.getLoader().loadUrlImage(mContext, item.imgUrl, transform, imageViews[i]); // 1280 * 400 网络图片大小
                 if (new File(item.imgUrl).isFile()) {
-                    Bitmap bitmap = BitmapFactory.decodeFile(item.imgUrl);
+                    Bitmap bitmap = BitmapFactory.decodeFile(item.imgUrl);  // bitmap未做优化
+
+
                     imageViews[i].setImageBitmap(bitmap);
                 }
             } else {
@@ -190,68 +190,27 @@ public class MyAdBanner extends FrameLayout {
                 @Override
                 public void onClick(View v) {
                     // TODO: onClick
-//                    Intent intent;
-//                    BannerItem ad = mDatas.get(j);
-//                    int order = ad.getType();
-//                    // type=1 跳转webview 加载网页
-//                    if (order == 1) {
-//                        intent = new Intent(mContext, AgreementActy.class);
-//                        intent.putExtra("url", ad.getUrl());
-//                        intent.putExtra("advert", "false");
-//                        intent.putExtra("title", ad.getTitle());
-//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                        mContext.startActivity(intent);
-//                        return;
-//                    }
-//                    // type=2 跳转微信公众号
-//                    if (order == 2) {
-//                        String appId = "wx3d28f9c06e75f680";//开发者平台ID
-//                        IWXAPI api = WXAPIFactory.createWXAPI(SVApp.applicationContext, appId, false);
-//                        if (api.isWXAppInstalled()) {
-//                            JumpToBizProfile.Req req = new JumpToBizProfile.Req();
-//                            req.toUserName = Constant.WEIXIN_USER; // 公众号原始ID
-//                            req.extMsg = "";
-//                            req.profileType = JumpToBizProfile.JUMP_TO_NORMAL_BIZ_PROFILE; // 普通公众号
-//                            api.sendReq(req);
-//                        } else {
-//                            Toast.makeText(SVApp.applicationContext, "微信未安装", Toast.LENGTH_SHORT).show();
-//                        }
-//                        return;
-//                    }
-//                    // type=3 跳转个人主页
-//                    if (order == 3) {
-//                        intent = new Intent(mContext, MyHomePageActivity.class);
-//                        intent.putExtra("userid", ad.getUserId());
-//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                        mContext.startActivity(intent);
-//                        return;
-//                    }
-//                    // type=4 商品
-//                    if (order == 4) {
-//                        CustomToast.showToast(SVApp.applicationContext, "暂未发布，敬请期待~");
-//                        return;
-//                    }
-//                    // type=5 跳转个人主页
-//                    if (order == 5) {
-//                        WorkDetailActy2.enterActivity(mContext, ad.getUserId(), ad.getComtyId(), -1, -1, 0, false, true);
-//                        return;
-//                    }
+                    BannerItem item = mDatas.get(j);
+                    if (toast != null) {
+                        toast.cancel();
+                    }
+                    toast = Toast.makeText(mContext, item.title, Toast.LENGTH_LONG);
+                    toast.show();
                 }
             });
         }
 
         int margin = DensityUtil.dp2px(mContext, 1);
-//        LayoutParams vp_params = new LayoutParams(screenWidth, (int) (screenWidth / 3.2));
-//        vp_params.gravity = Gravity.CENTER;
-//        mViewPager.setLayoutParams(vp_params);
+        LayoutParams vp_params = new LayoutParams(screenWidth, (int) (screenWidth / 3.2));
+        vp_params.gravity = Gravity.CENTER;
+        mViewPager.setLayoutParams(vp_params);
         mViewPager.setPadding(margin, margin, margin, margin);
         ll_point.setGravity(Gravity.CENTER);
 
         mViewPager.setAdapter(topNewsAdapter);
-        // 设置adCount*N 总是会导致第一张空白 所以设置在adCount*2+adCount处
+        // 设置adCount*N 总是会导致第一张空白 所以设置在adCount*2+adCount处 (如果单倍需要最少4张 并且设置首次跳到 count*n+3 )
         if (realAdCount > 1) {
-//            mViewPager.setCurrentItem(realAdCount * 1001, false);
-            mViewPager.setCurrentItem(realAdCount * 1000, false);
+            mViewPager.setCurrentItem(realAdCount * 1000 + 3, false);
         }
         prePosition = 0;
         showPoint(realAdCount);
@@ -317,7 +276,7 @@ public class MyAdBanner extends FrameLayout {
     }
 
     private int realPointSize = -1;
-
+    private int maxSize = 9;
     /**
      * 显示轮播图下方的圆点指示器 (设置源后)
      *
@@ -325,7 +284,7 @@ public class MyAdBanner extends FrameLayout {
      */
     private void showPoint(int size) {
         ll_point.removeAllViews();
-        if (size < 1 || size > 9) {
+        if (size < 1 || size > maxSize) {
             return;
         }
         realPointSize = size;
@@ -366,8 +325,12 @@ public class MyAdBanner extends FrameLayout {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            Log.d(TAG, "instantiateItem: position: " + position);
-            container.removeView(imageViews[position % adCount]);
+            Log.e(TAG, "instantiateItem: position: " + position);
+            ViewParent parent = imageViews[position % adCount].getParent();
+            Log.e(TAG, "instantiateItem: position%adCount: " + (position % adCount));
+            if (parent != null) {
+                ((ViewGroup) parent).removeView(imageViews[position % adCount]);
+            }
             container.addView(imageViews[position % adCount]);
             return imageViews[position % adCount];
         }
@@ -421,9 +384,9 @@ public class MyAdBanner extends FrameLayout {
      * @param position
      */
     private void changePoint(int position) {
-        int newPosition = position % realAdCount;
+        int newPosition = (position + realAdCount - 3) % realAdCount;
         // 把当前的索引赋值给前一个索引变量, 方便下一次再切换.
-        if (realPointSize < 1 || realPointSize > 4) {
+        if (realPointSize < 1 || realPointSize > maxSize) {
             prePosition = newPosition;
             return;
         }
@@ -448,47 +411,13 @@ public class MyAdBanner extends FrameLayout {
         }
     }
 
-    // 定义一个接口让外部设置展示的View (暂未实现,目前通过setSource方法传入数据(仿照原flycoBanner))
+    // 定义一个接口让外部设置展示的View
     public interface Adapter {
         boolean isEmpty();
 
         View getView(int position);
 
         int getCount();
-    }
-
-    static class DensityUtil {
-        private static final DisplayMetrics metric = new DisplayMetrics();
-
-        public static int dp2px(Context context, float dp) {
-            float density = context.getResources().getDisplayMetrics().density;
-            return (int) (dp * density + 0.5f);
-        }
-
-        /**
-         * @param context
-         * @return 屏幕宽度
-         */
-        public static int screenWidth(Context context) {
-            // 获得屏幕宽高(px)
-            DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-            Log.e(TAG, "displayMetrics.widthPixels: " + displayMetrics.widthPixels);
-            ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metric);
-            return metric.widthPixels; // 屏幕宽度
-//            screenHeight = metric.heightPixels; // 屏幕高度
-        }
-
-        /**
-         * @param context
-         * @return 屏幕高度
-         */
-        public static int screenHeight(Context context) {
-            // 获得屏幕宽高(px)
-            DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-            Log.e(TAG, "displayMetrics.heightPixels: " + displayMetrics.heightPixels);
-            ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metric);
-            return metric.heightPixels; // 屏幕高度
-        }
     }
 
 }

@@ -19,7 +19,7 @@ public class DensityUtil {
     }
 
     /**
-     * @param context
+     * @param context-activity
      * @return 屏幕宽度
      */
     public static int screenWidth(Context context) {
@@ -32,7 +32,7 @@ public class DensityUtil {
     }
 
     /**
-     * @param context
+     * @param context-activity
      * @return 屏幕高度
      */
     public static int screenHeight(Context context) {
