@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
                     for (String fileName : list) {
                         Log.e(TAG, "fileName: " + fileName);
 
-
                         if (fileName.endsWith(".jpg")) {
                             BannerItem bannerItem = new BannerItem();
                             bannerItem.imgUrl = path + File.separator + fileName;
@@ -68,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
                             fos.close();
                             is.close();
 
-                            if (fileName.endsWith("350.jpg")) break;
+                            if (fileName.endsWith("351.jpg")) break;
                         }
                     }
                     runOnUiThread(new Runnable() {

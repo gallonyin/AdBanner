@@ -163,15 +163,17 @@ public class MyAdBanner extends FrameLayout {
         extraCopy();
         imageViews = new ImageView[adCount];
         Log.e(TAG, "adCount: " + adCount);
+        Log.e(TAG, "realAdCount: " + realAdCount);
 
         for (int i = 0; i < adCount; i++) {
             final int j = i;
-            imageViews[i] = new ImageView(mContext);
+            final int k = (i + 3) % adCount;
+            imageViews[k] = new ImageView(mContext);
 
             LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
             params.gravity = Gravity.CENTER;
-            imageViews[i].setLayoutParams(params);
-            imageViews[i].setScaleType(ImageView.ScaleType.FIT_CENTER);
+            imageViews[k].setLayoutParams(params);
+            imageViews[k].setScaleType(ImageView.ScaleType.FIT_CENTER);
 
             // 图片下载地址 item.imgUrl
             BannerItem item = mDatas.get(i);
@@ -180,13 +182,13 @@ public class MyAdBanner extends FrameLayout {
                     Bitmap bitmap = BitmapFactory.decodeFile(item.imgUrl);  // bitmap未做优化
 
 
-                    imageViews[i].setImageBitmap(bitmap);
+                    imageViews[k].setImageBitmap(bitmap);
                 }
             } else {
-                imageViews[i].setImageDrawable(colorDrawable);
+                imageViews[k].setImageDrawable(colorDrawable);
             }
 
-            imageViews[i].setOnClickListener(new OnClickListener() {
+            imageViews[k].setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     // TODO: onClick
@@ -325,9 +327,8 @@ public class MyAdBanner extends FrameLayout {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            Log.e(TAG, "instantiateItem: position: " + position);
+            Log.d(TAG, "instantiateItem: position%adCount: " + (position % adCount));
             ViewParent parent = imageViews[position % adCount].getParent();
-            Log.e(TAG, "instantiateItem: position%adCount: " + (position % adCount));
             if (parent != null) {
                 ((ViewGroup) parent).removeView(imageViews[position % adCount]);
             }
